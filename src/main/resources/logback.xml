@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="300 seconds">
+    <property resource="application.properties" />
+    <include  file="/Users/LEILA/Desktop/Piotr/Workspace-github/security-rest/src/main/resources/logback-conf.xml" />
+</configuration>
+

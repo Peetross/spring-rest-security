@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>%d %p [%c] - &lt;%m&gt;%n</Pattern>
+        </layout>
+    </appender>
+    <!--
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+          <File>C:/Moje/Logi-local/sla/server_sla.log</File>
+            <filter class="ch.qos.logback.classic.filter.LevelFilter">
+                <level>ERROR</level>
+                <onMatch>DENY</onMatch>
+            </filter>
+          <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <FileNamePattern>server_sla.%d{yyyy-MM-dd}.log</FileNamePattern>
+          <MaxHistory>2</MaxHistory>
+          </rollingPolicy>
+          <layout class="ch.qos.logback.classic.PatternLayout">
+          <Pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</Pattern>
+          </layout>
+    </appender>
+    
+     <appender name="fileAlert" class="ch.qos.logback.core.rolling.RollingFileAppender">
+     <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>DEBUG</level>
+      <onMatch>DENY</onMatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>INFO</level>
+      <onMatch>DENY</onMatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>TRACE</level>
+      <onMatch>DENY</onMatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+      <onMatch>DENY</onMatch>
+    </filter>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>ERROR</level>
+      <onMatch>ACCEPT</onMatch>
+    </filter>
+          <File>C:/Moje/Logi-local/sla/alert.log</File>
+          <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <FileNamePattern>alert.%d{yyyy-MM-dd}.log</FileNamePattern>
+          <MaxHistory>2</MaxHistory>
+          </rollingPolicy>
+          <layout class="ch.qos.logback.classic.PatternLayout">
+          <Pattern>%date %level [%thread] %logger{10} [%file:%line] %msg%n</Pattern>
+          </layout>
+    </appender>
+    
+    <logger name="pl.firstdata.sla" level="ERROR" additivity="false">
+        <appender-ref ref="fileAlert" />
+    </logger>
+
+      <logger name="pl.firstdata.sla" level="INFO" additivity="false">
+        <appender-ref ref="file" />
+    </logger>
+ -->
+    <root level="DEBUG">
+        <appender-ref ref="stdout"/>
+    </root>
+    <logger name="pl.peetross.rest" level="DEBUG" />
+    <logger name="org.springframework.security" level="DEBUG" />
+</included>
