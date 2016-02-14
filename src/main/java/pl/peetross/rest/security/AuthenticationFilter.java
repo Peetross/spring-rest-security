@@ -19,6 +19,7 @@ import org.springframework.security.authentication.encoding.MessageDigestPasswor
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.UrlPathHelper;
 
@@ -56,10 +57,15 @@ public class AuthenticationFilter extends GenericFilterBean{
         
         String resourcePath = new UrlPathHelper().getPathWithinApplication(httpRequest);
      try{   
-        if(checkIfSentToAuthenicateURL(resourcePath, httpRequest)){
+        if	(checkIfSentToAuthenicateURL(resourcePath, httpRequest)){
         	log.debug("Trying to authenticate user {} by X-Auth-Username method", username);
         	authenicationUserAndPassword(username, password, httpResponse);
         }
+        
+        if (token.isPresent()) {
+        	log.debug("Trying to authenticate user by X-Auth-Token method. Token: {}", token);
+			authenticationtoken(token);
+		}
         logger.debug("AuthenticationFilter is passing request down the filter chain");
         addSessionContextToLogging();
         chain.doFilter(request, response);
@@ -77,12 +83,41 @@ public class AuthenticationFilter extends GenericFilterBean{
 		
 	}
 
+	private void authenticationtoken(Optional<String> token) {
+		Authentication resultOfAuthentication = tryToAuthenticateWithToken(token);
+		SecurityContextHolder.getContext().setAuthentication(resultOfAuthentication);
+		
+	}
+
+	private Authentication tryToAuthenticateWithToken(Optional<String> token) {
+		PreAuthenticatedAuthenticationToken requestAuthentication = new PreAuthenticatedAuthenticationToken(token, null);
+	    return tryToAuthenticate(requestAuthentication);
+	}
+	
+	private Authentication tryToAuthenticate(Authentication requestAuthentication) {
+		logger.debug("check tryToAuthenticate");
+		//going to Authentication Provider username and password or token
+	    Authentication responseAuthentication = authenticationManager.authenticate(requestAuthentication);
+	    if (responseAuthentication == null || !responseAuthentication.isAuthenticated()) {
+	    	
+	    	log.debug("Checking when try to authenticate , token:" + responseAuthentication.getDetails() + ","  + responseAuthentication.getName() +", Credentials:" + responseAuthentication.getCredentials().toString());
+	    	log.debug("Checking when try to authenticate. authorities:" + responseAuthentication.getAuthorities().toString());
+	    	throw new InternalAuthenticationServiceException("Unable to authenticate Domain User for provided credentials");
+	    }
+	    logger.debug("User successfully authenticated");
+	    return responseAuthentication;
+	}
+	
+	
 	private void addSessionContextToLogging() {
+		//TODO CHECK why encoded?
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String tokenValue = "EMPTY";
         if (authentication != null && !Strings.isNullOrEmpty(authentication.getDetails().toString())) {
             MessageDigestPasswordEncoder encoder = new MessageDigestPasswordEncoder("SHA-1");
+            log.debug("Check create id session for current request using token:" + authentication.getDetails().toString());
             tokenValue = encoder.encodePassword(authentication.getDetails().toString(), "not_so_random_salt");
+            log.debug("Check encoded id session for current request using token:" + tokenValue);
         }
         MDC.put(TOKEN_SESSION_KEY, tokenValue);
 
@@ -95,9 +130,10 @@ public class AuthenticationFilter extends GenericFilterBean{
 	private void authenicationUserAndPassword(Optional<String> username, Optional<String> password, HttpServletResponse httpResponse) throws IOException {
 		logger.debug("Check authenicationUserAndPassword, username:" + username + ", password:" + password);
 		Authentication resultOfAuthentication = tryToAuthenticateWithUsernameAndPassword(username, password);
+		//Setting authentication object in SecurityContext
 		SecurityContextHolder.getContext().setAuthentication(resultOfAuthentication);
         httpResponse.setStatus(HttpServletResponse.SC_OK);
-        log.debug("SPRAWDZAM:" + resultOfAuthentication.getDetails().toString());
+        log.debug("Check generated token again:" + resultOfAuthentication.getDetails().toString());
         TokenResponse tokenResponse = new TokenResponse(resultOfAuthentication.getDetails().toString());
         String tokenJsonResponse = new ObjectMapper().writeValueAsString(tokenResponse);
         httpResponse.addHeader("Content-Type", "application/json");
@@ -107,6 +143,7 @@ public class AuthenticationFilter extends GenericFilterBean{
 	private Authentication tryToAuthenticateWithUsernameAndPassword(Optional<String> username, Optional<String> password) {
 		logger.debug("Check tryToAuthenticateWithUsernameAndPassword, username:" + username); 
 		UsernamePasswordAuthenticationToken requestAuthentication = new UsernamePasswordAuthenticationToken(username, password);
+		 //UserRoleUsernamePasswordAuthenticationToken requestAuthentication = new UserRoleUsernamePasswordAuthenticationToken(username, password);
 		return tryToAuthenticate(requestAuthentication);
 	}
 
@@ -116,6 +153,7 @@ public class AuthenticationFilter extends GenericFilterBean{
 	        if (responseAuthentication == null || !responseAuthentication.isAuthenticated()) {
 	            throw new InternalAuthenticationServiceException("Unable to authenticate Domain User for provided credentials");
 	        }
+	        logger.debug("User with generated token:" + responseAuthentication.getDetails());
 	        logger.debug("User successfully authenticated");
 	        return responseAuthentication;
 	}

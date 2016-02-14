@@ -22,6 +22,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+import pl.peetross.rest.security.service.ExampleExternalServiceAuthenticatorImpl;
+import pl.peetross.rest.security.service.ExternalServiceAuthenticator;
+
 @Configuration
 @EnableWebSecurity
 @EnableScheduling
@@ -48,6 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 			//.anonymous().disable();
 		http
 			.addFilterBefore(new AuthenticationFilter(authenticationManager()), BasicAuthenticationFilter.class);
+			
 		
 		
 	
@@ -56,9 +60,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 	
 	@Override
 	public void configure(AuthenticationManagerBuilder auth) throws Exception {
-	        auth.authenticationProvider(userRoleUsernamePasswordAuthenticationProvider());
-	            
+	        auth
+	        	.authenticationProvider(userRoleUsernamePasswordAuthenticationProvider())
+	        	.authenticationProvider(tokenAuthenticationProvider());   
 	}
+	
+	@Bean
+	public TokenService tokenService() {
+		return new TokenService();
+	}
+	
+	@Bean
+	public ExternalServiceAuthenticator externalServiceAuthenticator(){
+		return new ExampleExternalServiceAuthenticatorImpl();
+	}
+	
 	@Bean
 	public AuthenticationEntryPoint unauthorizedEntryPoint() {
 		return new AuthenticationEntryPoint() {
@@ -76,9 +92,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 	
 	@Bean
 	public AuthenticationProvider userRoleUsernamePasswordAuthenticationProvider() {
-		return new UserRoleUsernamePasswordAuthenticationProvider();
+		return new UserRoleUsernamePasswordAuthenticationProvider(tokenService(), externalServiceAuthenticator());
 	}
-
+	@Bean
+	public AuthenticationProvider tokenAuthenticationProvider() {
+		return new TokenAuthenticationProvider(tokenService());
+	}
 
 
 }

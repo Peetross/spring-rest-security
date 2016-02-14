@@ -13,8 +13,8 @@ import pl.peetross.rest.api.ApiController;
 public class AuthenticationController extends ApiController{
 
 	@RequestMapping(value = AUTH_URL, method = RequestMethod.POST)
-	public String activate(){
-		return "activated";
+	public void activate(){
+//		/return "activated";
 	}
 	
 }
